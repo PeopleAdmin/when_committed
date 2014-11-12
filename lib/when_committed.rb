@@ -11,6 +11,14 @@ module WhenCommitted
       when_committed_callbacks << block
     end
 
+    def when_committed!(&block)
+      if self.connection.open_transactions > 0
+        when_committed(&block)
+      else
+        block.call
+      end
+    end
+
     private
 
     def when_committed_callbacks

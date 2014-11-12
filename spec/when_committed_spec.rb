@@ -21,6 +21,33 @@ describe "WhenCommitted" do
     model.should respond_to(:when_committed)
   end
 
+  describe "#when_committed!" do
+    before do
+      Backgrounder.reset
+    end
+    let(:model) { Widget.new }
+
+    context "when not running within a transaction" do
+      it "runs the block immediately" do
+        model.needs_to_happen
+        Backgrounder.jobs.should == [:important_work]
+      end
+    end
+
+    context "when running within a transaction" do
+      it "does not run the provided block until the transaction is committed" do
+        Widget.transaction do
+          model.needs_to_happen
+          Backgrounder.jobs.should be_empty
+          model.save
+          Backgrounder.jobs.should be_empty
+        end
+        Backgrounder.jobs.should == [:important_work]
+      end
+    end
+
+  end
+
   describe "#when_committed" do
     before do
       Backgrounder.reset
@@ -82,6 +109,9 @@ class Widget < ActiveRecord::Base
   include WhenCommitted::ActiveRecord
   def action_that_needs_follow_up_after_commit
     when_committed { Backgrounder.enqueue :important_work }
+  end
+  def needs_to_happen
+    when_committed! { Backgrounder.enqueue :important_work }
   end
   def another_action_with_follow_up
     when_committed { Backgrounder.enqueue :more_work }
