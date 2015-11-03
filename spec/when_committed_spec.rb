@@ -4,7 +4,6 @@ require 'when_committed'
 describe "WhenCommitted" do
 
   before(:all) do
-    ActiveRecord::Base.raise_in_transactional_callbacks = true
     ActiveRecord::Base.establish_connection(adapter: :nulldb)
     ActiveRecord::Migration.verbose = false
     ActiveRecord::Schema.define do
@@ -71,6 +70,7 @@ describe "WhenCommitted" do
         model.save
       end
       Widget.transaction do
+        model.name = "changed"
         model.save
       end
       expect(Backgrounder.jobs).to eq [:important_work]
