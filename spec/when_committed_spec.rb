@@ -70,7 +70,6 @@ describe "WhenCommitted" do
         model.save
       end
       Widget.transaction do
-        model.name = "changed"
         model.save
       end
       expect(Backgrounder.jobs).to eq [:important_work]
