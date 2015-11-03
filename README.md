@@ -41,6 +41,8 @@ is committed:
       when_committed { Resque.enqueue(RecalculateAggregateScores, self.id) }
     end
 
+Note that the block will run immediately when not in a transaction.
+
 ## Contributing
 
 1. [Fork it](https://github.com/PeopleAdmin/when_committed/fork_select)
