@@ -13,7 +13,7 @@ module WhenCommitted
     end
 
     def when_committed!(&block)
-      if in_transcation?
+      if ::ActiveRecord::Base.connection.open_transactions != 0
         when_committed(&block)
       else
         block.call
@@ -33,10 +33,6 @@ module WhenCommitted
 
     def clear_when_committed_callbacks
       when_committed_callbacks.clear
-    end
-
-    def in_transcation?
-      ::ActiveRecord::Base.connection.open_transactions != 0
     end
   end
 end
