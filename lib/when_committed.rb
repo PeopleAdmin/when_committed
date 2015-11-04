@@ -1,4 +1,5 @@
 require 'when_committed/version'
+require 'active_record'
 
 module WhenCommitted
   module ActiveRecord
@@ -12,7 +13,7 @@ module WhenCommitted
     end
 
     def when_committed!(&block)
-      if self.connection.open_transactions > 0
+      if in_transcation?
         when_committed(&block)
       else
         block.call
@@ -32,6 +33,10 @@ module WhenCommitted
 
     def clear_when_committed_callbacks
       when_committed_callbacks.clear
+    end
+
+    def in_transcation?
+      ::ActiveRecord::Base.connection.open_transactions != 0
     end
   end
 end

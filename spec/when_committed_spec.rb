@@ -6,7 +6,7 @@ describe "WhenCommitted" do
     ActiveRecord::Base.establish_connection :adapter => :nulldb
     ActiveRecord::Migration.verbose = false
     ActiveRecord::Schema.define do
-      create_table(:widgets) do |t|
+      create_table(:widgets, id: false) do |t|
         t.string  :name
         t.integer :size
       end
@@ -16,9 +16,9 @@ describe "WhenCommitted" do
   it "provides a #when_committed method" do
     sample_class = Class.new(ActiveRecord::Base)
     model = sample_class.new
-    model.should_not respond_to(:when_committed)
+    expect(model).not_to respond_to(:when_committed)
     sample_class.send :include, WhenCommitted::ActiveRecord
-    model.should respond_to(:when_committed)
+    expect(model).to respond_to(:when_committed)
   end
 
   describe "#when_committed!" do
@@ -30,7 +30,7 @@ describe "WhenCommitted" do
     context "when not running within a transaction" do
       it "runs the block immediately" do
         model.needs_to_happen
-        Backgrounder.jobs.should == [:important_work]
+        expect(Backgrounder.jobs).to eq [:important_work]
       end
     end
 
@@ -38,11 +38,11 @@ describe "WhenCommitted" do
       it "does not run the provided block until the transaction is committed" do
         Widget.transaction do
           model.needs_to_happen
-          Backgrounder.jobs.should be_empty
+          expect(Backgrounder.jobs).to be_empty
           model.save
-          Backgrounder.jobs.should be_empty
+          expect(Backgrounder.jobs).to be_empty
         end
-        Backgrounder.jobs.should == [:important_work]
+        expect(Backgrounder.jobs).to eq [:important_work]
       end
     end
 
@@ -57,17 +57,17 @@ describe "WhenCommitted" do
     it "runs the provided block after the transaction is committed" do
       model.action_that_needs_follow_up_after_commit
       model.save
-      Backgrounder.jobs.should == [:important_work]
+      expect(Backgrounder.jobs).to eq [:important_work]
     end
 
     it "does not run the provided block until the transaction is committed" do
       Widget.transaction do
         model.action_that_needs_follow_up_after_commit
-        Backgrounder.jobs.should be_empty
+        expect(Backgrounder.jobs).to be_empty
         model.save
-        Backgrounder.jobs.should be_empty
+        expect(Backgrounder.jobs).to be_empty
       end
-      Backgrounder.jobs.should == [:important_work]
+      expect(Backgrounder.jobs).to eq [:important_work]
     end
 
     it "does not run the provided block if the transaction is rolled back" do
@@ -79,7 +79,7 @@ describe "WhenCommitted" do
         end
       rescue Catastrophe
       end
-      Backgrounder.jobs.should be_empty
+      expect(Backgrounder.jobs).to be_empty
     end
 
     it "allows you to register multiple after_commit blocks" do
@@ -88,7 +88,7 @@ describe "WhenCommitted" do
         model.another_action_with_follow_up
         model.save
       end
-      Backgrounder.jobs.should == [:important_work,:more_work]
+      expect(Backgrounder.jobs).to eq [:important_work,:more_work]
     end
 
     it "does not run a registered block more than once" do
@@ -97,10 +97,9 @@ describe "WhenCommitted" do
         model.save
       end
       Widget.transaction do
-        model.name = "changed"
         model.save
       end
-      Backgrounder.should have(1).job
+      expect(Backgrounder.jobs).to eq [:important_work]
     end
   end
 end
